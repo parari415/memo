@@ -14,11 +14,11 @@
 
 # 手順②jsの反映
 ## 前回作ってもらったメニューバーのjs部分(ボタンで開閉)が反映できていなかったと思うので変更
-### ⅰ.もう一度Yブランチに移動
+### ⅰ.もう一度Yブランチに移動(前回の訂正・同内容なので同じブランチで作業)
 `git checkout Y`
 ### ⅱ.Yに移動できているか確認
-`git status`
-`git pull origin main`
+`git status`  
+`git pull origin main`でYブランチにも最新のmainの状態を反映させる
 ### ⅲ.フォルダ・ファイルの変更(今後再変更の可能性有)
 app/javascript/application.jsを以下に変更
 ```

@@ -71,13 +71,114 @@ procedure4 = recipe.procedures.create(step: "フライパンで両面を焼き�
 ### ⅱ.起動と確認(先週書いてもらったcssの影響受けて配置崩れている可能性があるが一旦無視でOK)
 `rails server`  
 urlを変更  
-urlの後ろにrecipes/1を追加  
+urlの後ろに/recipes/1を追加  
 例http://127.0.0.1:3000/recipes/1  
-urlの後ろにnewを追加  
+urlの後ろに/newを追加  
 show(recipe/1)とnewの2ページ報告書のようなものが表示できればOK
 
 # 手順④マージ
-
+別途詳細
 # 手順⑤プル(手順①と同作業)
 
-# 手順⑥
+# 手順⑥ユーザーモデル作成とログイン機能
+`git checkout -b　session`でブランチ移動
+### ⅰ.モデルとコントローラー作成
+```
+rails generate model User uid:string pass:string
+rails generate controller Sessions
+rails generate controller Users
+rails db:migrate
+```
+### ⅱ.config/routes.rbに以下を追加
+```
+get "login", to: "sessions#new"
+post "login", to: "sessions#create"
+delete "logout", to: "sessions#destroy"
+
+resources :users, only: [:new, :create]
+```
+### ⅲ.app/controllers/sessions_controller.rbを変更
+```
+class SessionsController < ApplicationController
+  def new
+    # ログインフォームの表示
+  end
+
+  def create
+    user = User.find_by(uid: params[:uid])
+    if user && BCrypt::Password.new(user.pass) == params[:pass]
+      session[:login_uid] = user.uid
+      redirect_to root_path, notice: "ログインしました"
+    else
+      flash[:alert] = "ログインに失敗しました"
+      render :new, status: 422
+    end
+  end
+
+  def destroy
+    session.delete(:login_uid)
+    redirect_to root_path, notice: "ログアウトしました"
+  end
+end
+```
+### ⅳ.app/controllers/users_controller.rbを変更
+```
+class UsersController < ApplicationController
+  def new
+    @user = User.new
+  end
+
+  def create
+    password = BCrypt::Password.create(params[:user][:pass])
+    @user = User.new(uid: params[:user][:uid], pass: password)
+    if @user.save
+      redirect_to login_path, notice: "登録が完了しました。ログインしてください。"
+    else
+      flash[:alert] = "登録に失敗しました"
+      render :new, status: 422
+    end
+  end
+end
+```
+### ⅴ.app/views/sessions/new.html.erbを作成
+```
+<h1>ログイン</h1>
+<%= form_with url: login_path, local: true do |f| %>
+  <div>
+    <%= f.label :uid, "ユーザーID" %>
+    <%= f.text_field :uid %>
+  </div>
+  <div>
+    <%= f.label :pass, "パスワード" %>
+    <%= f.password_field :pass %>
+  </div>
+  <%= f.submit "ログイン" %>
+<% end %>
+```
+### ⅵ.app/views/users/new.html.erbを作成
+```
+<h1>新規登録</h1>
+<%= form_with model: @user, local: true do |f| %>
+  <div>
+    <%= f.label :uid, "ユーザーID" %>
+    <%= f.text_field :uid %>
+  </div>
+  <div>
+    <%= f.label :pass, "パスワード" %>
+    <%= f.password_field :pass %>
+  </div>
+  <%= f.submit "登録" %>
+<% end %>
+```
+### ⅶ.動作確認
+urlの後ろにusers/newを追加  
+ユーザーの新規登録をしてみる⇨ログイン画面に遷移すると思うので登録したIDとパスでログイン  
+topページに遷移すればOK
+urlの後ろに/loginを追加  
+登録していないIDとパスでログイン  
+ログインページに再リロードすればOK
+### ⅷ.コミット
+`git add .`  
+`git commit -m "session and userモデル"`  
+`git push origin session`  
+マージはまだしなくてOK
